@@ -1,3 +1,4 @@
+import time
 import requests
 import xml.etree.ElementTree as ET
 
@@ -15,12 +16,19 @@ class BoardGameGeekApi:
             'username': username,
             'subtype': 'boardgame',
             'own': 1,
-            'stats': 1
+            'stats': 1,
         }
 
         r = requests.get(
             "{}/{}".format(self.url, ENDPOINT['collection']),
         params=params)
+
+        while r.status_code == 202:
+            print "Board Game Geek has queued your request. Trying again in 5 seconds."
+            time.sleep(5)
+            r = requests.get(
+                "{}/{}".format(self.url, ENDPOINT['collection']),
+            params=params)
 
         root = ET.fromstring(r.content)
 
