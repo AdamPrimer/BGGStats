@@ -88,6 +88,11 @@ class BoardGameGeekApi:
                 elif field == "name" and child.attrib['type'] == "primary":
                     game['name'] = child.attrib['value']
 
+                # Get game's weight
+                elif field == "statistics":
+                    game['weight'] = float(
+                        child.find('ratings').find('averageweight').attrib['value'])
+
                 # Get the player count poll
                 elif child.tag == "poll" and child.attrib['title'] == "User Suggested Number of Players":
                     game['players_poll'] = {}

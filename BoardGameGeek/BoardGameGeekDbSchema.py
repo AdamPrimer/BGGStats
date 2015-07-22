@@ -31,6 +31,7 @@ class Game(Base):
     time_min = Column(Integer, nullable=False)
     time_max = Column(Integer, nullable=False)
     time_avg = Column(Integer, nullable=False)
+    weight = Column(Float)
 
 class GamePlayerPoll(Base):
     __tablename__ = 'game_player_poll'

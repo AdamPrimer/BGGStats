@@ -33,6 +33,7 @@ class BoardGameGeekDb:
             'playingime': c.time_avg,
             'minplaytime': c.time_min,
             'maxplaytime': c.time_max,
+            'weight': c.weight,
             'players_poll': {},
         }
 
@@ -59,7 +60,9 @@ class BoardGameGeekDb:
             time_avg = game['playingtime'],
             time_min = game['minplaytime'],
             time_max = game['maxplaytime'],
-            gametype = game['gametype'])
+            gametype = game['gametype'],
+            weight = game['weight'],
+        )
         self.db.add(item)
 
         for count, votes in game['players_poll'].iteritems():

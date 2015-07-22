@@ -38,7 +38,7 @@ class BoardGameGeekCollection:
         games = []
         for i, g in enumerate(c['games']):
             game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
-            game.data['user_rating'] = g['user_rating']
+            game.data['user_rating'] = g.get('user_rating', 'N/A')
             if self.include_xpac or game['gametype'] == "boardgame":
                 games.append(game)
 

@@ -12,7 +12,7 @@ Options:
   --pos-thresh=<neg>  The number of "Best" votes to require [default: 0.2].
   --include-xpac      Includes game expansions in the results shown.
   --refresh           Fetches the latest Collection data from Board Game Geek.
-  --sort=<sort>       How to sort the results, options: perc, rating [default: perc]
+  --sort=<sort>       How to sort the results, options: perc, rating, weight [default: perc]
 """
 
 from datetime import datetime
@@ -26,20 +26,22 @@ def set_best_perc(collection, num_players):
     for game in collection:
         ans = game['players_poll'][num_players]
         perc = ans['best'] / float(ans['total']) * 100
-        best.add((perc, game['user_rating'], game))
+        best.add((perc, game['user_rating'], game['weight'], game))
     return best
 
 def print_games(collection, sort_by="perc"):
     sorted_res = sorted(collection, reverse=True)
     if sort_by == "rating":
         sorted_res = sorted(collection, reverse=True, key=lambda x: x[1])
+    elif sort_by == "weight":
+        sorted_res = sorted(collection, reverse=True, key=lambda x: x[2])
 
-    for perc, rating, game in sorted_res:
-        if game['user_rating']:
-            print "  ({:>2.0f}%) ({:0.1f}) {}".format(
-                perc, rating, game['name'])
+    for perc, rating, weight, game in sorted_res:
+        if rating and rating != 'N/A':
+            print "  ({:>3.0f}%) ({:>4.1f}) (w: {:>3.1f}) {}".format(
+                perc, rating, weight, game['name'])
         else:
-            print "  ({:>2.0f}%) (N/A) {}".format(perc, game['name'])
+            print "  ({:>3.0f}%) ( N/A) (w: {:>3.1f}) {}".format(perc, game['weight'], game['name'])
     print ""
 
 if __name__ == '__main__':
