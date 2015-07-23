@@ -2,7 +2,7 @@
 """Board Game Geek Stats
 
 Usage:
-  stats.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>]
+  bgg.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>]
   [--pos-thresh=<POS>] [--include-xpac] [--refresh] [--sort=<sort>]
 
 Options:

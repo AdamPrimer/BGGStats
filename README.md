@@ -7,11 +7,11 @@ A bit of Python code for analyzing the best games for various player counts base
 Requires `Python 2.7.9` and `pip`
 
 1. Install package dependencies `pip install -r requirements.txt`
-2. Run `stat.py`
+2. Run `bgg.py`
 
 ## Usage
 
-  `stats.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>] [--pos-thresh=<POS>] [--include-xpac] [--refresh] [--sort=<sort>]`
+  `bgg.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>] [--pos-thresh=<POS>] [--include-xpac] [--refresh] [--sort=<sort>]`
 
 ### Options:
 
