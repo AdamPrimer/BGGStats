@@ -18,6 +18,28 @@ class BoardGameGeek():
     def get_game(self, bgg_id):
         return BoardGameGeekGame(self.api, self.db, bgg_id)
 
+    def search(self, query, retall=False):
+        results = self.api.search(query=query)
+
+        exact = [x for x in results if x['name'] == query]
+
+        if not retall and len(exact) == 1:
+            return BoardGameGeekGame(self.api, self.db, exact[0]['bgg_id'])
+        elif not retall and len(exact) > 1:
+            games = []
+            for i, g in enumerate(exact):
+                game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
+                game.data['user_rating'] = g.get('user_rating', 'N/A')
+                games.append(game)
+            return games
+        else:
+            games = []
+            for i, g in enumerate(results):
+                game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
+                game.data['user_rating'] = g.get('user_rating', 'N/A')
+                games.append(game)
+            return games
+
 class BoardGameGeekCollection:
     def __init__(self, api, db, username, refresh=False, include_xpac=False):
         self.api = api
@@ -37,6 +59,8 @@ class BoardGameGeekCollection:
 
         games = []
         for i, g in enumerate(c['games']):
+            if not self.db.has_game(g['bgg_id']):
+                print "Fetching {} of {}".format(i+1, len(c['games']))
             game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
             game.data['user_rating'] = g.get('user_rating', 'N/A')
             if self.include_xpac or game['gametype'] == "boardgame":

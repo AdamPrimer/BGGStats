@@ -4,6 +4,7 @@
 Usage:
   bgg.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>]
   [--pos-thresh=<POS>] [--include-xpac] [--refresh] [--sort=<sort>]
+  bgg.py --game=<game>
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
@@ -38,40 +39,70 @@ def print_games(collection, sort_by="perc"):
 
     for perc, rating, weight, game in sorted_res:
         if rating and rating != 'N/A':
-            print "  ({:>3.0f}%) ({:>4.1f}) (w: {:>3.1f}) {}".format(
+            print u"  ({:>3.0f}%) ({:>4.1f}) (w: {:>3.1f}) {}".format(
                 perc, rating, weight, game['name'])
         else:
-            print "  ({:>3.0f}%) ( N/A) (w: {:>3.1f}) {}".format(perc, game['weight'], game['name'])
+            print u"  ({:>3.0f}%) ( N/A) (w: {:>3.1f}) {}".format(perc, game['weight'], game['name'])
     print ""
+
+def print_game(res):
+    print u"{} ({}) (#{}) (w: {:>3.1f})".format(
+        res['name'],
+        res['yearpublished'],
+        res['rank'],
+        res['weight']),
+    print "| {:2.2f} ({:2.2f}) ({})".format(
+        res['weighted_rating'], res['rating'], res['ratings'])
+    print "Artists: {}".format(", ".join([x['name'] for x in res['artists']]))
+    print "Categories: {}".format(", ".join([x['name'] for x in res['categories']]))
+    print "Designers: {}".format(", ".join([x['name'] for x in res['designers']]))
+    print "Mechanisms: {}".format(", ".join([x['name'] for x in res['mechanisms']]))
+    print "Publishers: {}".format(", ".join([x['name'] for x in res['publishers']]))
+    for i, ans in sorted(res['players_poll'].items()):
+        print "{}: {:>3.0%} {:>3.0%} {:3.0%}".format(
+            i,
+            ans['best'] / float(ans['total']),
+            ans['recommended'] / float(ans['total']),
+            ans['notrecommended'] / float(ans['total']))
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='Board Game Geek Stats v1.0')
 
     bgg = BoardGameGeek()
 
-    username = args['--u']
-    col = bgg.get_collection(username, refresh=args['--refresh'], include_xpac=args['--include-xpac'])
-
-    if args['--n']:
-        num_players = int(args['--n'])
-
-        print "Games Played Best with {} Players".format(num_players)
-        best = set_best_perc(col.best_at(num_players), num_players)
-        print_games(best, sort_by=args['--sort'])
-
-        print "Games Played Well with {} Players".format(num_players)
-        good = set_best_perc(col.good_at(
-                num_players,
-                neg_thresh=float(args['--neg-thresh']),
-                pos_thresh=float(args['--pos-thresh'])), num_players)
-        print_games(good.difference(best), sort_by=args['--sort'])
+    if args['--game']:
+        res = bgg.search(query=args['--game'])
+        if isinstance(res, list):
+            for game in sorted(res,
+                    key=lambda x: (x['rank'] == None, x['rank'])):
+                print_game(game)
+                print ""
+        else:
+            print_game(res)
 
     else:
-        for num_players, games in col.best_at():
-            if not num_players:
-                continue
+        username = args['--u']
+        col = bgg.get_collection(username, refresh=args['--refresh'], include_xpac=args['--include-xpac'])
+
+        if args['--n']:
+            num_players = int(args['--n'])
 
             print "Games Played Best with {} Players".format(num_players)
-            best = set_best_perc(games, num_players)
+            best = set_best_perc(col.best_at(num_players), num_players)
             print_games(best, sort_by=args['--sort'])
 
+            print "Games Played Well with {} Players".format(num_players)
+            good = set_best_perc(col.good_at(
+                    num_players,
+                    neg_thresh=float(args['--neg-thresh']),
+                    pos_thresh=float(args['--pos-thresh'])), num_players)
+            print_games(good.difference(best), sort_by=args['--sort'])
+
+        else:
+            for num_players, games in col.best_at():
+                if not num_players:
+                    continue
+
+                print "Games Played Best with {} Players".format(num_players)
+                best = set_best_perc(games, num_players)
+                print_games(best, sort_by=args['--sort'])
