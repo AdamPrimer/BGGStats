@@ -10,6 +10,14 @@ class BoardGameGeekDb:
         DBSession = sessionmaker(bind=engine)
         self.db = DBSession()
 
+    def has_game(self, bgg_id):
+        try:
+            c = self.db.query(Game).filter(
+                Game.bgg_id == bgg_id).one()
+            return True
+        except exc.NoResultFound:
+            return False
+
     def game(self, bgg_id):
         try:
             c = self.db.query(Game).filter(

@@ -1,6 +1,7 @@
 import time
 import requests
 import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
 
 ENDPOINT = {
     "collection": "/collection",
@@ -10,6 +11,22 @@ ENDPOINT = {
 class BoardGameGeekApi:
     def __init__(self, url):
         self.url = url
+
+    def top_100(self, limit=100):
+        games = []
+        for i in xrange(0, limit / 100):
+            print "Fetching Page {} of {} of the top games on Board Game Geek".format(
+                i+1, limit/100)
+            r = requests.get(
+                "https://boardgamegeek.com/browse/boardgame/page/{}".format(i+1))
+            html = BeautifulSoup(r.content, "html.parser")
+            items = html.body.find_all('td', attrs={'class':'collection_objectname'})
+
+            for item in items:
+                url = item.find('a')['href']
+                _, _, bgg_id, _ = url.split("/")
+                games.append(bgg_id)
+        return games
 
     def collection(self, username):
         params = {

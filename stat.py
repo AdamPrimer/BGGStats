@@ -49,6 +49,37 @@ if __name__ == '__main__':
 
     bgg = BoardGameGeek()
 
+    '''
+    limit = 1000
+    min_weight = 2.8
+    num_players = 5
+    neg_thresh = float(args['--neg-thresh'])
+    pos_thresh = float(args['--pos-thresh'])
+
+    top_100 = bgg.top_100(limit=limit)[:limit]
+    print u"Board Game Geek Top {}".format(limit)
+    for i, game in enumerate(sorted(top_100, reverse=True,
+            key=lambda x: x['best'] / float(x['total']))):
+        if game['weight'] < min_weight:
+            continue
+        if game['maxplayers'] < num_players:
+            continue
+        if num_players not in game['players_poll']:
+            continue
+        six = game['players_poll'][num_players]
+        if six['notrecommended'] / float(six['total']) > neg_thresh:
+            continue
+        perc = six['best'] / float(six['total'])
+        if perc < pos_thresh:
+            continue
+
+        print u"  ({:>3}) ({:>3.0%}) (w: {:>3.1f}) {}".format(
+            i+1, perc, game['weight'], game['name'])
+    print ""
+
+    exit()
+    '''
+
     username = args['--u']
     col = bgg.get_collection(username, refresh=args['--refresh'], include_xpac=args['--include-xpac'])
 

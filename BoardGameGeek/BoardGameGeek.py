@@ -18,6 +18,18 @@ class BoardGameGeek():
     def get_game(self, bgg_id):
         return BoardGameGeekGame(self.api, self.db, bgg_id)
 
+    def top_100(self, limit=100, include_xpac=True):
+        top100 = self.api.top_100(limit=limit)
+        games = []
+        for i, bgg_id in enumerate(top100):
+            if not self.db.has_game(bgg_id):
+                print "Fetching Game {} of {}".format(i+1, len(top100))
+            game = BoardGameGeekGame(self.api, self.db, bgg_id)
+            game.data['user_rating'] = 'N/A'
+            if include_xpac or game['gametype'] == "boardgame":
+                games.append(game)
+        return games
+
 class BoardGameGeekCollection:
     def __init__(self, api, db, username, refresh=False, include_xpac=False):
         self.api = api
