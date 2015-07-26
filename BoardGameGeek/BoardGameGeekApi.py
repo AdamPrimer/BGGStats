@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 
 ENDPOINT = {
     "collection": "/collection",
-    "thing": "/thing"
+    "thing": "/thing",
+    "search": "/search",
 }
 
 class BoardGameGeekApi:
@@ -98,6 +99,12 @@ class BoardGameGeekApi:
 
         game = {
             'bgg_id': bgg_id,
+            'rank': None,
+            'categories': [],
+            'designers': [],
+            'artists': [],
+            'publishers': [],
+            'mechanisms': [],
         }
         for item in root:
             game['gametype'] = item.attrib['type']
@@ -117,6 +124,47 @@ class BoardGameGeekApi:
                 elif field == "statistics":
                     game['weight'] = float(
                         child.find('ratings').find('averageweight').attrib['value'])
+
+                    ranks = child.find('ratings').find('ranks')
+                    for rank in ranks:
+                        if rank.attrib['name'] == "boardgame":
+                            rnk = rank.attrib['value']
+                            if rnk != "Not Ranked":
+                                game['rank'] = int(rnk)
+
+                    game['ratings'] = int(
+                        child.find('ratings').find('usersrated').attrib['value'])
+                    game['rating'] = float(
+                        child.find('ratings').find('average').attrib['value'])
+                    game['weighted_rating'] = float(
+                        child.find('ratings').find('bayesaverage').attrib['value'])
+
+                elif field == "link":
+                    if child.attrib['type'] == "boardgameartist":
+                        game['artists'].append({
+                            'art_id': int(child.attrib['id']),
+                            'name': child.attrib['value']
+                        })
+                    if child.attrib['type'] == "boardgamecategory":
+                        game['categories'].append({
+                            'cat_id': int(child.attrib['id']),
+                            'name': child.attrib['value']
+                        })
+                    if child.attrib['type'] == "boardgamedesigner":
+                        game['designers'].append({
+                            'des_id': int(child.attrib['id']),
+                            'name': child.attrib['value']
+                        })
+                    if child.attrib['type'] == "boardgamemechanic":
+                        game['mechanisms'].append({
+                            'mec_id': int(child.attrib['id']),
+                            'name': child.attrib['value']
+                        })
+                    if child.attrib['type'] == "boardgamepublisher":
+                        game['publishers'].append({
+                            'pub_id': int(child.attrib['id']),
+                            'name': child.attrib['value']
+                        })
 
                 # Get the player count poll
                 elif child.tag == "poll" and child.attrib['title'] == "User Suggested Number of Players":
@@ -146,3 +194,40 @@ class BoardGameGeekApi:
                             del game['players_poll'][num]
 
         return game
+
+    def search(self, query):
+        params = {
+            'query': query
+        }
+
+        r = requests.get(
+            "{}/{}".format(self.url, ENDPOINT['search']),
+        params=params)
+
+        root = ET.fromstring(r.content)
+
+        results = []
+        for item in root:
+            if item.attrib['type'] not in ["boardgame", "boardgameexpansion"]:
+                continue
+            bgg_id = int(item.attrib['id'])
+            name = item.find('name').attrib['value']
+            typ = item.find('name').attrib['type']
+            if not typ == "primary":
+                continue
+
+            year_item = item.find('yearpublished')
+
+            year = 0
+            if year_item is not None:
+                year = year_item.attrib['value']
+
+            results.append({
+                'bgg_id': bgg_id,
+                'name': name,
+                'year': year
+            })
+
+        return results
+
+
