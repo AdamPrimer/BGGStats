@@ -115,20 +115,20 @@ if __name__ == '__main__':
             filtered.append(game)
 
         print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
-        for game in filtered:
+        for i, game in enumerate(filtered):
             if num_players:
+                six = game['players_poll'][num_players]
+                perc = six['best'] / float(six['total'])
                 print u"  ({:>3}) ({:>3.0%}) ({:3.0%}) (w: {:>3.1f}) {}".format(
-                    i+1, perc,
+                    game['rank'], perc,
                     (six['best'] + six['recommended']) / float(six['total']),
                     game['weight'], game['name'])
             else:
                 print u"  ({:>3}) (w: {:>3.1f}) {}".format(
-                    i+1, game['weight'], game['name'])
+                    game['rank'], game['weight'], game['name'])
         print ""
 
-    exit()
-
-    if args['--game']:
+    elif args['--game']:
         res = bgg.search(query=args['--game'])
         if isinstance(res, list):
             for game in sorted(res,
