@@ -43,7 +43,6 @@ class BoardGameGeekDb:
         p = self.db.query(GamePlayerPoll).filter(
             GamePlayerPoll.bgg_id == bgg_id).all()
 
-
         artists = self.db.query(GameArtist).filter(
             GameArtist.bgg_id == bgg_id).all()
         categories = self.db.query(GameCategory).filter(

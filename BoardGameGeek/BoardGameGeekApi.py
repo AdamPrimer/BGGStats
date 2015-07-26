@@ -82,6 +82,7 @@ class BoardGameGeekApi:
 
         game = {
             'bgg_id': bgg_id,
+            'rank': None,
             'categories': [],
             'designers': [],
             'artists': [],
@@ -194,7 +195,15 @@ class BoardGameGeekApi:
                 continue
             bgg_id = int(item.attrib['id'])
             name = item.find('name').attrib['value']
-            year = item.find('yearpublished').attrib['value']
+            typ = item.find('name').attrib['type']
+            if not typ == "primary":
+                continue
+
+            year_item = item.find('yearpublished')
+
+            year = 0
+            if year_item is not None:
+                year = year_item.attrib['value']
 
             results.append({
                 'bgg_id': bgg_id,

@@ -51,15 +51,15 @@ def print_game(res):
         res['yearpublished'],
         res['rank'],
         res['weight']),
-    print "| {:2.2f} ({:2.2f}) ({})".format(
+    print u"| {:2.2f} ({:2.2f}) ({})".format(
         res['weighted_rating'], res['rating'], res['ratings'])
-    print "Artists: {}".format(", ".join([x['name'] for x in res['artists']]))
-    print "Categories: {}".format(", ".join([x['name'] for x in res['categories']]))
-    print "Designers: {}".format(", ".join([x['name'] for x in res['designers']]))
-    print "Mechanisms: {}".format(", ".join([x['name'] for x in res['mechanisms']]))
-    print "Publishers: {}".format(", ".join([x['name'] for x in res['publishers']]))
+    print u"Artists: {}".format(", ".join([x['name'] for x in res['artists']]))
+    print u"Categories: {}".format(", ".join([x['name'] for x in res['categories']]))
+    print u"Designers: {}".format(", ".join([x['name'] for x in res['designers']]))
+    print u"Mechanisms: {}".format(", ".join([x['name'] for x in res['mechanisms']]))
+    print u"Publishers: {}".format(", ".join([x['name'] for x in res['publishers']]))
     for i, ans in sorted(res['players_poll'].items()):
-        print "{}: {:>3.0%} {:>3.0%} {:3.0%}".format(
+        print u"{}: {:>3.0%} {:>3.0%} {:3.0%}".format(
             i,
             ans['best'] / float(ans['total']),
             ans['recommended'] / float(ans['total']),
