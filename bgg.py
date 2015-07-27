@@ -7,6 +7,7 @@ Usage:
   bgg.py --game=<game>
   bgg.py --top=<top> [--n=<num_players] [--neg-thresh=<neg>]
   [--pos-thresh=<pos>] [--min-weight=<min>] [--max-weight=<max>]
+  [--max-year=<year>]
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
@@ -89,6 +90,10 @@ if __name__ == '__main__':
         if args['--n']:
             num_players = int(args['--n'])
 
+        max_year = 9999
+        if args['--max-year']:
+            max_year = int(args['--max-year'])
+
         neg_thresh = float(args['--neg-thresh'])
         pos_thresh = float(args['--pos-thresh'])
 
@@ -99,6 +104,8 @@ if __name__ == '__main__':
             if game['weight'] < min_weight:
                 continue
             if game['weight'] > max_weight:
+                continue
+            if game['yearpublished'] > max_year:
                 continue
             if num_players:
                 if game['maxplayers'] < num_players:
