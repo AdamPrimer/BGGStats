@@ -23,7 +23,7 @@ Options:
   --max-weight=<max>  The maxmimum weight of game to display.
   --min-year=<min>    The minimum year of game to display.
   --max-year=<max>    The maxmimum year of game to display.
-  --group=<group>     Options: year, players, mechanism
+  --group=<group>     Options: year, players, mechanism, mechanism-pair, weight, weight-individual
 """
 
 from itertools import combinations
@@ -150,6 +150,7 @@ if __name__ == '__main__':
             for i, game in enumerate(filtered):
                 print_filt_game(i, game, num_players)
             print ""
+
         elif args['--group'] == 'year':
             grouped = defaultdict(list)
             for game in filtered:
@@ -159,6 +160,36 @@ if __name__ == '__main__':
             print ""
             for num, games in sorted(grouped.items()):
                 print "## {} ({} results, {:>3.1%})".format(num, len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
+        elif args['--group'] == 'weight':
+            grouped = defaultdict(list)
+            for game in filtered:
+                grouped[int(game['weight'])].append(game)
+
+            print "# Top {} by Weight (Grouped)".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items()):
+                print "## {} ({} results, {:>3.1%})".format(num, len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
+        elif args['--group'] == 'weight-individual':
+            grouped = defaultdict(list)
+            for game in filtered:
+                grouped[round(game['weight'], 1)].append(game)
+
+            print "# Top {} by Weight (Individual)".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items()):
+                print "## {:2.1f} ({} results, {:>3.1%})".format(num, len(games),
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
