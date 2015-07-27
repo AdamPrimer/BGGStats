@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Board Game Geek Stats
+"""Board Game Geek Info
 
 Usage:
   bgg.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>]
@@ -7,7 +7,7 @@ Usage:
   bgg.py --game=<game>
   bgg.py --top=<top> [--n=<num_players] [--neg-thresh=<neg>]
   [--pos-thresh=<pos>] [--min-weight=<min>] [--max-weight=<max>]
-  [--min-year=<min>] [--max-year=<max>]
+  [--min-year=<min>] [--max-year=<max>] [--group=<group]
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
@@ -23,6 +23,7 @@ Options:
   --max-weight=<max>  The maxmimum weight of game to display.
   --min-year=<min>    The minimum year of game to display.
   --max-year=<max>    The maxmimum year of game to display.
+  --group=<group>     Options: year, players, mechanism
 """
 
 from itertools import combinations
@@ -75,6 +76,18 @@ def print_game(res):
             ans['recommended'] / float(ans['total']),
             ans['notrecommended'] / float(ans['total']))
 
+def print_filt_game(i, game, num_players):
+    if num_players:
+        six = game['players_poll'][num_players]
+        perc = six['best'] / float(six['total'])
+        print u"\t({:>3}) ({:>3.0%}) ({:3.0%}) (w: {:>3.1f}) {}".format(
+            game['rank'], perc,
+            (six['best'] + six['recommended']) / float(six['total']),
+            game['weight'], game['name'])
+    else:
+        print u"\t({:>3}) (w: {:>3.1f}) {}".format(
+            game['rank'], game['weight'], game['name'])
+
 if __name__ == '__main__':
     args = docopt(__doc__, version='Board Game Geek Stats v1.0')
 
@@ -99,7 +112,7 @@ if __name__ == '__main__':
         if args['--max-year']:
             max_year = int(args['--max-year'])
 
-        min_year = 0
+        min_year = -9999
         if args['--min-year']:
             min_year = int(args['--min-year'])
 
@@ -116,7 +129,7 @@ if __name__ == '__main__':
                 continue
             if game['yearpublished'] > max_year:
                 continue
-            if game['yearpublished'] < min_year:
+            if args['--min-year'] and game['yearpublished'] < min_year:
                 continue
             if num_players:
                 if game['maxplayers'] < num_players:
@@ -132,19 +145,78 @@ if __name__ == '__main__':
 
             filtered.append(game)
 
-        print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
-        for i, game in enumerate(filtered):
-            if num_players:
-                six = game['players_poll'][num_players]
-                perc = six['best'] / float(six['total'])
-                print u"  ({:>3}) ({:>3.0%}) ({:3.0%}) (w: {:>3.1f}) {}".format(
-                    game['rank'], perc,
-                    (six['best'] + six['recommended']) / float(six['total']),
-                    game['weight'], game['name'])
-            else:
-                print u"  ({:>3}) (w: {:>3.1f}) {}".format(
-                    game['rank'], game['weight'], game['name'])
-        print ""
+        if not args['--group']:
+            print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
+            for i, game in enumerate(filtered):
+                print_filt_game(i, game, num_players)
+            print ""
+        elif args['--group'] == 'year':
+            grouped = defaultdict(list)
+            for game in filtered:
+                grouped[game['yearpublished']].append(game)
+
+            print "# Top {} by Year".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items()):
+                print "## {} ({} results, {:>3.1%})".format(num, len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
+        elif args['--group'] == 'players':
+            grouped = defaultdict(list)
+            for game in filtered:
+                for x in xrange(game['minplayers'], game['maxplayers'] + 1):
+                    grouped[x].append(game)
+
+            print "# Top {} by Player Count".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items()):
+                print "## {} ({} results, {:>3.1%})".format(num, len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
+        elif args['--group'] == 'mechanism':
+            grouped = defaultdict(list)
+            for game in filtered:
+                for mech in game['mechanisms']:
+                    grouped[mech['name']].append(game)
+
+            print "# Top {} by Mechanism".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items(), key=lambda x: len(x[1]),
+                    reverse=True):
+                print "## {} ({} results, {:>3.1%})".format(num, len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
+        elif args['--group'] == 'mechanism-pair':
+            grouped = defaultdict(list)
+            for game in filtered:
+                for mech, mech2 in combinations(game['mechanisms'], 2):
+                    grouped[(mech['name'], mech2['name'])].append(game)
+
+            print "# Top {} by Mechanism Pairing".format(len(filtered))
+            print ""
+            for num, games in sorted(grouped.items(), key=lambda x: len(x[1]),
+                    reverse=True):
+                if len(games) == 1:
+                    continue
+                print "## {} and {} ({} results, {:>3.1%})".format(num[0], num[1], len(games),
+                        len(games)/float(len(filtered)))
+                print ""
+                for game in games:
+                    print_filt_game(i, game, num_players)
+                print ""
+
 
     elif args['--game']:
         res = bgg.search(query=args['--game'])
