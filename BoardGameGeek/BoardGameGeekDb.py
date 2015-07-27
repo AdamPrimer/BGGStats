@@ -200,7 +200,7 @@ class BoardGameGeekDb:
     def game_generic(self, generic, bgg_id, cls, idx):
         try:
             gen = self.db.query(cls).filter(
-                getattr(cls, idx) == generic[idx] and
+                getattr(cls, idx) == generic[idx]).filter(
                 cls.bgg_id == bgg_id).one()
             return gen
         except exc.NoResultFound:

@@ -16,8 +16,8 @@ class BoardGameGeekApi:
     def top_100(self, limit=100):
         games = []
         for i in xrange(0, limit / 100):
-            print "Fetching Page {} of {} of the top games on Board Game Geek".format(
-                i+1, limit/100)
+            #print "Fetching Page {} of {} of the top games on Board Game Geek".format(
+            #    i+1, limit/100)
             r = requests.get(
                 "https://boardgamegeek.com/browse/boardgame/page/{}".format(i+1))
             html = BeautifulSoup(r.content, "html.parser")

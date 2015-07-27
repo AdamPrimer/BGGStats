@@ -25,6 +25,7 @@ Options:
   --max-year=<max>    The maxmimum year of game to display.
 """
 
+from itertools import combinations
 from datetime import datetime
 from collections import defaultdict
 from BoardGameGeek import BoardGameGeek
