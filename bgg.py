@@ -7,7 +7,7 @@ Usage:
   bgg.py --game=<game>
   bgg.py --top=<top> [--n=<num_players] [--neg-thresh=<neg>]
   [--pos-thresh=<pos>] [--min-weight=<min>] [--max-weight=<max>]
-  [--max-year=<year>]
+  [--min-year=<min>] [--max-year=<max>]
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
@@ -19,6 +19,10 @@ Options:
   --include-xpac      Includes game expansions in the results shown.
   --refresh           Fetches the latest Collection data from Board Game Geek.
   --sort=<sort>       How to sort the results, options: perc, rating, weight [default: perc]
+  --min-weight=<min>  The minimum weight of game to display.
+  --max-weight=<max>  The maxmimum weight of game to display.
+  --min-year=<min>    The minimum year of game to display.
+  --max-year=<max>    The maxmimum year of game to display.
 """
 
 from datetime import datetime
@@ -94,6 +98,10 @@ if __name__ == '__main__':
         if args['--max-year']:
             max_year = int(args['--max-year'])
 
+        min_year = 0
+        if args['--min-year']:
+            min_year = int(args['--min-year'])
+
         neg_thresh = float(args['--neg-thresh'])
         pos_thresh = float(args['--pos-thresh'])
 
@@ -106,6 +114,8 @@ if __name__ == '__main__':
             if game['weight'] > max_weight:
                 continue
             if game['yearpublished'] > max_year:
+                continue
+            if game['yearpublished'] < min_year:
                 continue
             if num_players:
                 if game['maxplayers'] < num_players:
