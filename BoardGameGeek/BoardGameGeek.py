@@ -19,7 +19,7 @@ class BoardGameGeek():
         return BoardGameGeekCollection(self.api, self.db, username, refresh, include_xpac)
 
     def get_game(self, bgg_id):
-        return self.BoardGameGeekGame(self.api, self.db, bgg_id)
+        return BoardGameGeekGame(self.api, self.db, bgg_id)
 
     def top_100(self, limit=100, include_xpac=True):
         top100 = self.db.games(limit=limit)
@@ -46,7 +46,7 @@ class BoardGameGeek():
             results = self.api.ratings(bgg_id)
             self.db.ratings_add(bgg_id, results)
             return results
-        return False
+        return self.db.ratings(bgg_id)
 
     def search(self, query, retall=False):
         results = self.api.search(query=query)

@@ -246,6 +246,14 @@ class BoardGameGeekDb:
         else:
             return False
 
+
+    def ratings(self, bgg_id):
+        res = self.db.query(GameRating.bgg_id, GameRating.bgg_user, GameRating.rating)
+        if res:
+            return res
+        else:
+            return False
+
     def has_ratings(self, bgg_id):
         res = self.db.query(GameRating).filter(
             GameRating.bgg_id == bgg_id).count()
