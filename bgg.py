@@ -7,14 +7,16 @@ Usage:
   bgg.py --game=<game>
   bgg.py --top=<top> [--n=<num_players] [--neg-thresh=<neg>]
   [--pos-thresh=<pos>] [--min-weight=<min>] [--max-weight=<max>]
-  [--min-year=<min>] [--max-year=<max>] [--group=<group]
+  [--min-year=<min>] [--max-year=<max>] [--max-length=<max>] [--group=<group]
+  [--reddit] [--category=<category>...] [--nmax=<n>]
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
   --n=<num_players>   Show recommendations for a specific number of players
+  --nmax=<num_players>  Show recommendations for a specific number of players
   --game=<game>       The name of a game to look up.
   --top=<top>         Shows stats on the top X games from Board Game Geek.
-  --neg-thresh=<neg>  The number of "Not Recommended" votes to tolerate [default: 0.2].
+  --neg-thresh=<neg>  The number of "Not Recommended" votes to tolerate [default: 0.25].
   --pos-thresh=<neg>  The number of "Best" votes to require [default: 0].
   --include-xpac      Includes game expansions in the results shown.
   --refresh           Fetches the latest Collection data from Board Game Geek.
@@ -23,9 +25,12 @@ Options:
   --max-weight=<max>  The maxmimum weight of game to display.
   --min-year=<min>    The minimum year of game to display.
   --max-year=<max>    The maxmimum year of game to display.
+  --max-length=<max>    The maxmimum length of game to display.
   --group=<group>     Options: year, players, mechanism, mechanism-pair, weight, weight-individual
+  --reddit
 """
 
+import cProfile
 from itertools import combinations
 from datetime import datetime
 from collections import defaultdict
@@ -76,17 +81,38 @@ def print_game(res):
             ans['recommended'] / float(ans['total']),
             ans['notrecommended'] / float(ans['total']))
 
-def print_filt_game(i, game, num_players):
-    if num_players:
-        six = game['players_poll'][num_players]
-        perc = six['best'] / float(six['total'])
-        print u"\t({:>3}) ({:>3.0%}) ({:3.0%}) (w: {:>3.1f}) {}".format(
-            game['rank'], perc,
-            (six['best'] + six['recommended']) / float(six['total']),
-            game['weight'], game['name'])
+def print_filt_game(i, game, num_players, markdown=False):
+    if not markdown:
+        if num_players:
+            six = game['players_poll'][num_players]
+            perc = six['best'] / float(six['total'])
+            print u"\t({:>3}) ({:>3.0%}) ({:3.0%}) (w: {:>3.1f}, {} min) {}".format(
+                game['rank'], perc,
+                (six['best'] + six['recommended']) / float(six['total']),
+                game['weight'], game['maxplaytime'], game['name'])
+        else:
+            print u"\t({:>3}) (w: {:>3.1f}, {} min) {}".format(
+                game['rank'], game['weight'], game['maxplaytime'], game['name'])
     else:
-        print u"\t({:>3}) (w: {:>3.1f}) {}".format(
-            game['rank'], game['weight'], game['name'])
+        stars = u""
+        if [x for x in game['categories'] if x['name'] == "Wargame"]:
+            stars = u"*** "
+
+        if num_players:
+            six = game['players_poll'][num_players]
+            perc = six['best'] / float(six['total'])
+            print u"{:>3} | {:>3.0%} | {:3.0%} | {:>3.1f} | {} min | {} | {}[{}]({})".format(
+                game['rank'], perc,
+                (six['best'] + six['recommended']) / float(six['total']),
+                game['weight'], game['maxplaytime'],
+                game['yearpublished'], stars, game['name'],
+                "https://boardgamegeek.com/boardgame/{}".format(game['bgg_id']))
+
+        else:
+            print u"{:>3} | {:>3.1f} | {} min | {} | {}[{}]({})".format(
+                game['rank'], game['weight'], game['maxplaytime'],
+                game['yearpublished'], stars, game['name'],
+                "https://boardgamegeek.com/boardgame/{}".format(game['bgg_id']))
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='Board Game Geek Stats v1.0')
@@ -108,6 +134,14 @@ if __name__ == '__main__':
         if args['--n']:
             num_players = int(args['--n'])
 
+        nmax = num_players
+        if args['--nmax']:
+            nmax = int(args['--nmax'])
+
+        max_length = 9999
+        if args['--max-length']:
+            max_length = int(args['--max-length'])
+
         max_year = 9999
         if args['--max-year']:
             max_year = int(args['--max-year'])
@@ -119,36 +153,56 @@ if __name__ == '__main__':
         neg_thresh = float(args['--neg-thresh'])
         pos_thresh = float(args['--pos-thresh'])
 
+
+
         top_100 = bgg.top_100(limit=limit)[:limit]
 
         filtered = []
         for i, game in enumerate(top_100):
+            if args['--category']:
+                overlap = [x for x in game['categories'] if x['name'] in
+                        args['--category']]
+                if not overlap:
+                    continue
             if game['weight'] < min_weight:
                 continue
             if game['weight'] > max_weight:
                 continue
             if game['yearpublished'] > max_year:
                 continue
+            if game['maxplaytime'] > max_length:
+                continue
             if args['--min-year'] and game['yearpublished'] < min_year:
                 continue
             if num_players:
-                if game['maxplayers'] < num_players:
-                    continue
-                if num_players not in game['players_poll']:
-                    continue
-                six = game['players_poll'][num_players]
-                if six['notrecommended'] / float(six['total']) > neg_thresh:
-                    continue
-                perc = six['best'] / float(six['total'])
-                if perc < pos_thresh:
+                skip = False
+                for i in xrange(num_players, nmax + 1):
+                    if game['maxplayers'] < i:
+                        skip = True
+                        break
+                    if i not in game['players_poll']:
+                        skip = True
+                        break
+                    six = game['players_poll'][i]
+                    if six['notrecommended'] / float(six['total']) > neg_thresh:
+                        skip = True
+                        break
+                    perc = six['best'] / float(six['total'])
+                    if perc < pos_thresh:
+                        skip = True
+                        break
+                if skip:
                     continue
 
             filtered.append(game)
 
         if not args['--group']:
             print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
+            if args['--reddit']:
+                print "BGG Rank | Best | Recommend | Weight | Length | Year | Game"
+                print "---------|------|-----------|--------|--------|------|-----"
             for i, game in enumerate(filtered):
-                print_filt_game(i, game, num_players)
+                print_filt_game(i, game, num_players, args['--reddit'])
             print ""
 
         elif args['--group'] == 'year':
@@ -248,9 +302,15 @@ if __name__ == '__main__':
                     print_filt_game(i, game, num_players)
                 print ""
 
+        elif args['--group'] == "rating":
+            for game in filtered:
+                print "Getting Ratings for {}".format(game['name'])
+                ratings = bgg.ratings(game['bgg_id'])
+
 
     elif args['--game']:
         res = bgg.search(query=args['--game'])
+
         if isinstance(res, list):
             for game in sorted(res,
                     key=lambda x: (x['rank'] == None, x['rank'])):

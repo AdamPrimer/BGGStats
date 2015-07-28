@@ -1,3 +1,6 @@
+import sys
+import time
+
 from BoardGameGeekApi import BoardGameGeekApi
 from BoardGameGeekDb import BoardGameGeekDb
 from collections import defaultdict
@@ -16,41 +19,50 @@ class BoardGameGeek():
         return BoardGameGeekCollection(self.api, self.db, username, refresh, include_xpac)
 
     def get_game(self, bgg_id):
-        return BoardGameGeekGame(self.api, self.db, bgg_id)
+        return self.BoardGameGeekGame(self.api, self.db, bgg_id)
 
     def top_100(self, limit=100, include_xpac=True):
-        top100 = self.api.top_100(limit=limit)
-        games = []
-        for i, bgg_id in enumerate(top100):
-            if not self.db.has_game(bgg_id):
-                print "Fetching Game {} of {}".format(i+1, len(top100))
-            game = BoardGameGeekGame(self.api, self.db, bgg_id)
-            game.data['user_rating'] = 'N/A'
-            if include_xpac or game['gametype'] == "boardgame":
-                games.append(game)
-        return games
+        top100 = self.db.games(limit=limit)
+        if not top100 or len(top100) != limit:
+            top100 = self.api.top_100(limit=limit)
+
+            games = []
+            for i, bgg_id in enumerate(top100):
+                if isinstance(bgg_id, int):
+                    if not self.db.has_game(bgg_id):
+                        sys.stderr.write("Fetching Game {} of {}\n".format(i+1,
+                            len(top100)))
+
+                game = BoardGameGeekGame(self.api, self.db, bgg_id)
+                game.data['user_rating'] = 'N/A'
+                if include_xpac or game['gametype'] == "boardgame":
+                    games.append(game)
+            return games
+        else:
+            return top100
+
+    def ratings(self, bgg_id):
+        if not self.db.has_ratings(bgg_id):
+            results = self.api.ratings(bgg_id)
+            self.db.ratings_add(bgg_id, results)
+            return results
+        return False
 
     def search(self, query, retall=False):
         results = self.api.search(query=query)
 
         exact = [x for x in results if x['name'] == query]
 
+        games = []
         if not retall and len(exact) == 1:
-            return BoardGameGeekGame(self.api, self.db, exact[0]['bgg_id'])
-        elif not retall and len(exact) > 1:
-            games = []
-            for i, g in enumerate(exact):
-                game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
-                game.data['user_rating'] = g.get('user_rating', 'N/A')
-                games.append(game)
-            return games
-        else:
-            games = []
-            for i, g in enumerate(results):
-                game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
-                game.data['user_rating'] = g.get('user_rating', 'N/A')
-                games.append(game)
-            return games
+            games.append(
+                BoardGameGeekGame(self.api, self.db, exact[0]['bgg_id']))
+            return self.db.games_extended_info(games)[0]
+
+        for i, g in enumerate(results):
+            game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
+            games.append(game)
+        return self.db.games_extended_info(games)
 
 class BoardGameGeekCollection:
     def __init__(self, api, db, username, refresh=False, include_xpac=False):
@@ -78,7 +90,7 @@ class BoardGameGeekCollection:
             if self.include_xpac or game['gametype'] == "boardgame":
                 games.append(game)
 
-        return games
+        return self.db.games_extended_info(games)
 
     def good_at(self, num_players, neg_thresh=0.2, pos_thresh=0.4):
         '''Determine games that are good to play at a certain player count based
@@ -144,8 +156,12 @@ class BoardGameGeekGame:
         self.api = api
         self.db = db
 
-        self.bgg_id = bgg_id
-        self.data = self._get()
+        if isinstance(bgg_id, int):
+            self.bgg_id = bgg_id
+            self.data = self._get()
+        else:
+            self.bgg_id = bgg_id.bgg_id
+            self.data = bgg_id
 
     def __getitem__(self, key):
         if key == "bgg_id":

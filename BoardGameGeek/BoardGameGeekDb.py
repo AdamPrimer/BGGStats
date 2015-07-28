@@ -16,11 +16,13 @@ from BoardGameGeekDbSchema import (
     GameDesigner,
     GameMechanism,
     GamePublisher,
+    GameRating,
 )
 
 class BoardGameGeekDb:
     def __init__(self, path):
         engine = create_engine(path)
+        #engine.echo = True
         Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
         self.db = DBSession()
@@ -33,27 +35,109 @@ class BoardGameGeekDb:
         except exc.NoResultFound:
             return False
 
+    def games(self, limit=100):
+        res = self.db.query(Game).filter(
+            Game.rank <= limit).all()
+        if res:
+            games = [self.get_game(r.bgg_id, r) for r in res]
+            return self.games_extended_info(games)
+        return False
+
+    def games_extended_info(self, games):
+        games = {r['bgg_id']: r for r in games}
+
+        artists = {}
+        categories = {}
+        designers = {}
+        mechanisms = {}
+        publishers = {}
+
+        r_artists = self.db.query(Artist).all()
+        r_categories = self.db.query(Category).all()
+        r_designers = self.db.query(Designer).all()
+        r_mechanisms = self.db.query(Mechanism).all()
+        r_publishers = self.db.query(Publisher).all()
+
+        g_artists = self.db.query(GameArtist).all()
+        g_categories = self.db.query(GameCategory).all()
+        g_designers = self.db.query(GameDesigner).all()
+        g_mechanisms = self.db.query(GameMechanism).all()
+        g_publishers = self.db.query(GamePublisher).all()
+
+        g_polls = self.db.query(GamePlayerPoll).all()
+
+        for artist in r_artists:
+            artists[artist.art_id] = artist.name
+
+        for category in r_categories:
+            categories[category.cat_id] = category.name
+
+        for designer in r_designers:
+            designers[designer.des_id] = designer.name
+
+        for mechanism in r_mechanisms:
+            mechanisms[mechanism.mec_id] = mechanism.name
+
+        for publisher in r_publishers:
+            publishers[publisher.pub_id] = publisher.name
+
+        for item in g_polls:
+            game = games.get(item.bgg_id, False)
+            if game:
+                game['players_poll'][item.player_count] = {
+                    'best': item.best,
+                    'recommended': item.recc,
+                    'notrecommended': item.nrec,
+                    'total': item.total,
+                }
+
+        for artist in g_artists:
+            game = games.get(artist.bgg_id, False)
+            if game:
+                game['artists'].append({
+                    'art_id': artist.art_id,
+                    'name': artists[artist.art_id]})
+
+        for category in g_categories:
+            game = games.get(category.bgg_id, False)
+            if game:
+                game['categories'].append({
+                'cat_id': category.cat_id,
+                'name': categories[category.cat_id]})
+
+        for designer in g_designers:
+            game = games.get(designer.bgg_id, False)
+            if game:
+                game['designers'].append({
+                'des_id': designer.des_id,
+                'name': designers[designer.des_id]})
+
+        for mechanism in g_mechanisms:
+            game = games.get(mechanism.bgg_id, False)
+            if game:
+                game['mechanisms'].append({
+                'mec_id': mechanism.mec_id,
+                'name': mechanisms[mechanism.mec_id]})
+
+        for publisher in g_publishers:
+            game = games.get(publisher.bgg_id, False)
+            if game:
+                game['publishers'].append({
+                'pub_id': publisher.pub_id,
+                'name': publishers[publisher.pub_id]})
+
+        return sorted(games.values(), key=lambda x: x['rank'])
+
     def game(self, bgg_id):
         try:
-            c = self.db.query(Game).filter(
+            raw = self.db.query(Game).filter(
                 Game.bgg_id == bgg_id).one()
         except exc.NoResultFound:
             return False
 
-        p = self.db.query(GamePlayerPoll).filter(
-            GamePlayerPoll.bgg_id == bgg_id).all()
+        return self.get_game(bgg_id, raw)
 
-        artists = self.db.query(GameArtist).filter(
-            GameArtist.bgg_id == bgg_id).all()
-        categories = self.db.query(GameCategory).filter(
-            GameCategory.bgg_id == bgg_id).all()
-        designers = self.db.query(GameDesigner).filter(
-            GameDesigner.bgg_id == bgg_id).all()
-        mechanisms = self.db.query(GameMechanism).filter(
-            GameMechanism.bgg_id == bgg_id).all()
-        publishers = self.db.query(GamePublisher).filter(
-            GamePublisher.bgg_id == bgg_id).all()
-
+    def get_game(self, bgg_id, c):
         game = {
             'bgg_id': bgg_id,
             'name': c.name,
@@ -69,6 +153,7 @@ class BoardGameGeekDb:
             'maxplaytime': c.time_max,
             'weight': c.weight,
             'weighted_rating': c.weighted_rating,
+            'user_rating': 'N/A',
             'rating': c.rating,
             'ratings': c.ratings,
             'rank': c.rank,
@@ -79,39 +164,6 @@ class BoardGameGeekDb:
             'mechanisms': [],
             'publishers': [],
         }
-
-        for item in p:
-            game['players_poll'][item.player_count] = {
-                'best': item.best,
-                'recommended': item.recc,
-                'notrecommended': item.nrec,
-                'total': item.total,
-            }
-
-        for artist in artists:
-            game['artists'].append({
-                'art_id': artist.art_id,
-                'name': artist.art.name})
-
-        for category in categories:
-            game['categories'].append({
-                'cat_id': category.cat_id,
-                'name': category.cat.name})
-
-        for designer in designers:
-            game['designers'].append({
-                'des_id': designer.des_id,
-                'name': designer.des.name})
-
-        for mechanism in mechanisms:
-            game['mechanisms'].append({
-                'mec_id': mechanism.mec_id,
-                'name': mechanism.mec.name})
-
-        for publisher in publishers:
-            game['publishers'].append({
-                'pub_id': publisher.pub_id,
-                'name': publisher.pub.name})
 
         return game
 
@@ -185,6 +237,34 @@ class BoardGameGeekDb:
             return collection
 
         return False
+
+    def has_rankings(self, limit=100):
+        res = self.db.query(Game).filter(
+            Game.rank == limit).count()
+        if res:
+            return True
+        else:
+            return False
+
+    def has_ratings(self, bgg_id):
+        res = self.db.query(GameRating).filter(
+            GameRating.bgg_id == bgg_id).count()
+        if res:
+            return True
+        else:
+            return False
+
+    def ratings_add(self, bgg_id, ratings):
+        self.db.query(GameRating).filter(
+            GameRating.bgg_id == bgg_id).delete()
+        for rating in ratings:
+            item = GameRating(
+                bgg_user=rating['username'],
+                bgg_id=rating['bgg_id'],
+                rating=rating['rating'],
+                created_at=datetime.utcnow())
+            self.db.add(item)
+        self.db.commit()
 
     def collection_add(self, collection):
         self.db.query(GameCollection).filter(

@@ -19,7 +19,7 @@ class Game(Base):
     __tablename__ = 'game'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, nullable=False)
+    bgg_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
     description = Column(Text)
     year = Column(Integer)
@@ -31,53 +31,63 @@ class Game(Base):
     time_min = Column(Integer, nullable=False)
     time_max = Column(Integer, nullable=False)
     time_avg = Column(Integer, nullable=False)
-    rank = Column(Integer)
+    rank = Column(Integer, index=True)
     ratings = Column(Integer)
     rating = Column(Float)
     weighted_rating = Column(Float)
     weight = Column(Float)
 
+class GameRating(Base):
+    __tablename__ = 'game_rating'
+
+    id = Column(Integer, primary_key=True)
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    bgg_user = Column(String(250), nullable=False, index=True)
+    rating = Column(Float, nullable=False)
+    created_at = Column(DateTime, nullable=False)
+    game = relationship(Game)
+
 class Artist(Base):
     __tablename__ = 'artist'
 
     id = Column(Integer, primary_key=True)
-    art_id = Column(Integer, nullable=False)
+    art_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
 
 class Category(Base):
     __tablename__ = 'category'
 
     id = Column(Integer, primary_key=True)
-    cat_id = Column(Integer, nullable=False)
+    cat_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
 
 class Designer(Base):
     __tablename__ = 'designer'
 
     id = Column(Integer, primary_key=True)
-    des_id = Column(Integer, nullable=False)
+    des_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
 
 class Mechanism(Base):
     __tablename__ = 'mechanism'
 
     id = Column(Integer, primary_key=True)
-    mec_id = Column(Integer, nullable=False)
+    mec_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
 
 class Publisher(Base):
     __tablename__ = 'publisher'
 
     id = Column(Integer, primary_key=True)
-    pub_id = Column(Integer, nullable=False)
+    pub_id = Column(Integer, nullable=False, index=True)
     name = Column(String(250), nullable=False)
 
 class GameArtist(Base):
     __tablename__ = 'game_artist'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    art_id = Column(Integer, ForeignKey('artist.art_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    art_id = Column(Integer, ForeignKey('artist.art_id'), index=True)
     game = relationship(Game)
     art = relationship(Artist)
 
@@ -85,8 +95,8 @@ class GameCategory(Base):
     __tablename__ = 'game_category'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    cat_id = Column(Integer, ForeignKey('category.cat_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    cat_id = Column(Integer, ForeignKey('category.cat_id'), index=True)
     game = relationship(Game)
     cat = relationship(Category)
 
@@ -94,8 +104,8 @@ class GameDesigner(Base):
     __tablename__ = 'game_designer'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    des_id = Column(Integer, ForeignKey('designer.des_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    des_id = Column(Integer, ForeignKey('designer.des_id'), index=True)
     game = relationship(Game)
     des = relationship(Designer)
 
@@ -103,8 +113,8 @@ class GameMechanism(Base):
     __tablename__ = 'game_mechanism'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    mec_id = Column(Integer, ForeignKey('mechanism.mec_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    mec_id = Column(Integer, ForeignKey('mechanism.mec_id'), index=True)
     game = relationship(Game)
     mec = relationship(Mechanism)
 
@@ -112,8 +122,8 @@ class GamePublisher(Base):
     __tablename__ = 'game_publisher'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    pub_id = Column(Integer, ForeignKey('publisher.pub_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    pub_id = Column(Integer, ForeignKey('publisher.pub_id'), index=True)
     game = relationship(Game)
     pub = relationship(Publisher)
 
@@ -121,7 +131,7 @@ class GamePlayerPoll(Base):
     __tablename__ = 'game_player_poll'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
     player_count = Column(Integer, nullable=False)
     best = Column(Integer, nullable=False)
     recc = Column(Integer, nullable=False)
@@ -133,8 +143,8 @@ class GameCollection(Base):
     __tablename__ = 'game_collection'
 
     id = Column(Integer, primary_key=True)
-    bgg_id = Column(Integer, ForeignKey('game.bgg_id'))
-    bgg_user = Column(String(250), nullable=False)
+    bgg_id = Column(Integer, ForeignKey('game.bgg_id'), index=True)
+    bgg_user = Column(String(250), nullable=False, index=True)
     stat_ownd = Column(Boolean, nullable=False)
     stat_pown = Column(Boolean, nullable=False)
     stat_fort = Column(Boolean, nullable=False)
