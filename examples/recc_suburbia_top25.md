@@ -26,12 +26,17 @@ BGG Rank | Votes |  Score | Weight | Length | Year | Game
       42 |   432 | 18.68% |    3.4 | 120 min | 2013 | [Russian Railroads](https://boardgamegeek.com/boardgame/144733)
       56 |   333 | 18.58% |    2.7 |  45 min | 2014 | [Roll for the Galaxy](https://boardgamegeek.com/boardgame/132531)
      277 |   109 | 18.57% |    4.2 | 120 min | 2014 | [Kanban: Automotive Revolution](https://boardgamegeek.com/boardgame/109276)
+     329 |   119 | 18.54% |    3.5 | 120 min | 2009 | [Shipyard](https://boardgamegeek.com/boardgame/55600)
+      40 |   443 | 18.39% |    3.5 | 200 min | 2013 | [Nations](https://boardgamegeek.com/boardgame/126042)
+     459 |   107 | 18.38% |    2.1 |  45 min | 2012 | [Guildhall](https://boardgamegeek.com/boardgame/132372)
+     141 |   206 | 18.36% |    2.9 |  90 min | 2013 | [Viticulture](https://boardgamegeek.com/boardgame/128621)
+     470 |   103 | 18.36% |    2.3 |  45 min | 2012 | [Fleet](https://boardgamegeek.com/boardgame/121297)
 
 ## Explanation of Score: ##
 
 1. Look at the votes for the Top 500 games on BGG
 2. Rank each user's votes for these games (1 is highest).
-3. For each user that has the game "Suburbia" no lower than rank 3  see what other games that user has ranked at least as high.
+3. For each user that has the game "Suburbia" no lower than rank 3 see what other games that user has ranked at least as high.
 4. Count how many users have each other game that meet this criterion
 5. Divide the number of votes by the total number of people that like the game
 
