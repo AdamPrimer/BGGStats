@@ -19,3 +19,5 @@
 ./bgg.py --top=500 --group=mechanism-pair > examples/bgg_top_500_by_mechanism_pair.md
 ./bgg.py --top=500 --group=weight > examples/bgg_top_500_by_weight.md
 ./bgg.py --top=500 --group=weight-individual > examples/bgg_top_500_by_weight_individual.md
+
+./recc.py --game="Suburbia" > examples/recc_suburbia_top25.md

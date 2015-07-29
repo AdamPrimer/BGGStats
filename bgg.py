@@ -5,15 +5,15 @@ Usage:
   bgg.py --u=<username> [--n=<num_players>] [--neg-thresh=<neg>]
   [--pos-thresh=<POS>] [--include-xpac] [--refresh] [--sort=<sort>]
   bgg.py --game=<game>
-  bgg.py --top=<top> [--n=<num_players] [--neg-thresh=<neg>]
+  bgg.py --top=<top> [--n=<num_players] [--max-n=<max_players] [--neg-thresh=<neg>]
   [--pos-thresh=<pos>] [--min-weight=<min>] [--max-weight=<max>]
   [--min-year=<min>] [--max-year=<max>] [--max-length=<max>] [--group=<group]
-  [--reddit] [--category=<category>...] [--nmax=<n>]
+  [--reddit] [--category=<category>...]
 
 Options:
   --u=<username>      The Board Game Geek username with the desired collection to analyse.
   --n=<num_players>   Show recommendations for a specific number of players
-  --nmax=<num_players>  Show recommendations for a specific number of players
+  --max-n=<max_players>  Show recommendations for a specific number of players
   --game=<game>       The name of a game to look up.
   --top=<top>         Shows stats on the top X games from Board Game Geek.
   --neg-thresh=<neg>  The number of "Not Recommended" votes to tolerate [default: 0.25].
@@ -134,9 +134,9 @@ if __name__ == '__main__':
         if args['--n']:
             num_players = int(args['--n'])
 
-        nmax = num_players
-        if args['--nmax']:
-            nmax = int(args['--nmax'])
+        max_n = num_players
+        if args['--max-n']:
+            max_n = int(args['--max-n'])
 
         max_length = 9999
         if args['--max-length']:
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                 continue
             if num_players:
                 skip = False
-                for i in xrange(num_players, nmax + 1):
+                for i in xrange(num_players, max_n + 1):
                     if game['maxplayers'] < i:
                         skip = True
                         break
@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
         elif args['--group'] == "rating":
             for game in filtered:
-                print "Getting Ratings for {}".format(game['name'])
+                print u"Getting Ratings for {}".format(game['name'])
                 ratings = bgg.ratings(game['bgg_id'])
 
 

@@ -7,7 +7,7 @@ from collections import defaultdict
 
 PATH = {
     "api": "https://www.boardgamegeek.com/xmlapi2",
-    "db": "sqlite:///cache.db"
+    "db": "sqlite:///cache/cache.db"
 }
 
 class BoardGameGeek():
@@ -41,6 +41,9 @@ class BoardGameGeek():
         else:
             return top100
 
+    def all_ratings(self):
+        return self.db.all_ratings()
+
     def ratings(self, bgg_id):
         if not self.db.has_ratings(bgg_id):
             results = self.api.ratings(bgg_id)
@@ -49,20 +52,24 @@ class BoardGameGeek():
         return self.db.ratings(bgg_id)
 
     def search(self, query, retall=False):
-        results = self.api.search(query=query)
+        res = self.db.game_by_name(query)
+        if res:
+            return self.db.games_extended_info([res])[0]
+        else:
+            results = self.api.search(query=query)
 
-        exact = [x for x in results if x['name'] == query]
+            exact = [x for x in results if x['name'] == query]
 
-        games = []
-        if not retall and len(exact) == 1:
-            games.append(
-                BoardGameGeekGame(self.api, self.db, exact[0]['bgg_id']))
-            return self.db.games_extended_info(games)[0]
+            games = []
+            if not retall and len(exact) == 1:
+                games.append(
+                    BoardGameGeekGame(self.api, self.db, exact[0]['bgg_id']))
+                return self.db.games_extended_info(games)[0]
 
-        for i, g in enumerate(results):
-            game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
-            games.append(game)
-        return self.db.games_extended_info(games)
+            for i, g in enumerate(results):
+                game = BoardGameGeekGame(self.api, self.db, g['bgg_id'])
+                games.append(game)
+            return self.db.games_extended_info(games)
 
 class BoardGameGeekCollection:
     def __init__(self, api, db, username, refresh=False, include_xpac=False):

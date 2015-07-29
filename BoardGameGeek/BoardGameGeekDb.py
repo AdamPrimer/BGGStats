@@ -128,6 +128,13 @@ class BoardGameGeekDb:
 
         return sorted(games.values(), key=lambda x: x['rank'])
 
+    def game_by_name(self, name):
+        raw = self.db.query(Game).filter(Game.name == name).first()
+        if raw:
+            return self.get_game(raw.bgg_id, raw)
+        else:
+            return False
+
     def game(self, bgg_id):
         try:
             raw = self.db.query(Game).filter(
@@ -246,9 +253,17 @@ class BoardGameGeekDb:
         else:
             return False
 
+    def all_ratings(self):
+        res = self.db.query(GameRating.bgg_id, GameRating.bgg_user,
+                GameRating.rating)
+        if res:
+            return res
+        else:
+            return False
 
     def ratings(self, bgg_id):
-        res = self.db.query(GameRating.bgg_id, GameRating.bgg_user, GameRating.rating)
+        res = self.db.query(GameRating.bgg_id, GameRating.bgg_user,
+                GameRating.rating).filter(GameRating.bgg_id == bgg_id)
         if res:
             return res
         else:
