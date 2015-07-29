@@ -87,6 +87,7 @@ def tally_votes(votes):
 
             likers[game] += 1
 
+    counts = defaultdict(lambda: defaultdict(int))
     highers = defaultdict(lambda: defaultdict(int))
     for user, ranks in votes.iteritems():
         if game_id not in ranks:
@@ -101,10 +102,11 @@ def tally_votes(votes):
             if game_id == rival:
                 continue
 
+            counts[game_id][rival] += 1
             if rank >= rival_rank:
                 highers[game_id][rival] += 1
 
-    return (highers, likers)
+    return (highers, likers, counts)
 
 res = bgg.search(query=args['--game'])
 
@@ -133,25 +135,28 @@ sys.stderr.write("Loading Ratings\n")
 sys.stderr.write("Parsing User Votes\n")
 votes = parse_votes(users, gcount)
 sys.stderr.write("Tallying User Votes\n\n")
-highers, likers = tally_votes(votes)
+highers, likers, counts = tally_votes(votes)
 
 weighted = []
 for game, score in sorted(highers[game_id].items(), key=lambda x: x[1], reverse=True):
     g = bgg.get_game(game)
     if score >= int(args['--thresh']):
-        weighted.append((g, score, score / float(likers[game])))
+        weighted.append((g, score, score / float(likers[game]), score /
+            float(counts[game_id][game]), float(counts[game_id][game])))
 
-print u"BGG Rank | Votes |  Score | Weight | Length | Year | Game"
-print u"---------|-------|--------|--------|--------|------|-----"
+print u"BGG Rank | Votes |  Score | Score2 | Score3 | Weight | Length | Year | Game"
+print u"---------|-------|--------|--------|--------|--------|--------|------|-----"
 limit = int(args['--limit'])
-weighted = sorted(weighted, key=lambda x: x[2], reverse=True)[:int(1.5 * limit)]
-weighted = sorted(weighted, key=lambda x: math.log(x[1]) * x[2], reverse=True)[:limit]
-for game, votes, score in weighted:
+#weighted = sorted(weighted, key=lambda x: x[2], reverse=True)[:int(1.5 * limit)]
+weighted = sorted(weighted, key=lambda x: math.log(x[1]) * x[2] * x[3], reverse=True)[:limit]
+for game, votes, score, score2, score3 in weighted:
     stars = ""
-    print u"{:>8} | {:>5} | {:>0.2%} | {:>6.1f} | {:>3} min | {} | {}[{}]({})".format(
+    print u"{:>8} | {:>5} | {:>6.2%} | {:>6.2%} | {:>6} | {:>6.1f} | {:>3} min | {} | {}[{}]({})".format(
         game['rank'],
         votes,
         score,
+        score2,
+        int(score3),
         game['weight'],
         game['maxplaytime'],
         game['yearpublished'],
