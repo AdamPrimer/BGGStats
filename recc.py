@@ -169,4 +169,5 @@ print "5. Divide the number of votes by the total number of people that like the
 print ""
 
 print "## Interpretation of Score: ##\n"
-print "The percentage of people that like the recommended game, that also like the chosen game."
+print u"The percentage of people that like the recommended game, that also like {}.".format(
+    args['--game'])
