@@ -9,10 +9,11 @@ Options:
   --game=<game>       The name of a game to look up.
   --rank-min=<min>    The [default: 3].
   --thresh=<thresh>   The [default: 50].
-  --limit=<limit>     The [default: 20].
+  --limit=<limit>     The [default: 25].
 """
 
 import sys
+import math
 import codecs
 import locale
 
@@ -142,8 +143,10 @@ for game, score in sorted(highers[game_id].items(), key=lambda x: x[1], reverse=
 
 print u"BGG Rank | Votes |  Score | Weight | Length | Year | Game"
 print u"---------|-------|--------|--------|--------|------|-----"
-for game, votes, score in sorted(weighted, key=lambda x: x[2],
-        reverse=True)[:int(args['--limit'])]:
+limit = int(args['--limit'])
+weighted = sorted(weighted, key=lambda x: x[2], reverse=True)[:int(1.5 * limit)]
+weighted = sorted(weighted, key=lambda x: math.log(x[1]) * x[2], reverse=True)[:limit]
+for game, votes, score in weighted:
     stars = ""
     print u"{:>8} | {:>5} | {:>0.2%} | {:>6.1f} | {:>3} min | {} | {}[{}]({})".format(
         game['rank'],
@@ -171,3 +174,11 @@ print ""
 print "## Interpretation of Score: ##\n"
 print u"The percentage of people that like the recommended game, that also like {}.".format(
     args['--game'])
+print ""
+
+print "## Sorting: ##\n"
+print "The top {} games when sorted by `score` are re-sorted".format(
+    int(limit * 1.5)),
+print "by `log(votes) * score`, then the top {} of those are presented.".format(
+    limit)
+print "\nThis works to rank games with more votes higher, without having really popular games dominate the rankings."
