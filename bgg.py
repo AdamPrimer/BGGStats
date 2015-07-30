@@ -26,9 +26,16 @@ Options:
   --min-year=<min>    The minimum year of game to display.
   --max-year=<max>    The maxmimum year of game to display.
   --max-length=<max>    The maxmimum length of game to display.
-  --group=<group>     Options: year, players, mechanism, mechanism-pair, weight, weight-individual
+  --group=<group>     Options: year, players, mechanism, mechanism-pair, weight,
+  weight-individual, player-weight
   --reddit
 """
+
+import sys
+import codecs
+import locale
+
+sys.stdout = codecs.getwriter(locale.getpreferredencoding())(sys.stdout)
 
 import cProfile
 from itertools import combinations
@@ -96,7 +103,7 @@ def print_filt_game(i, game, num_players, markdown=False):
     else:
         stars = u""
         if [x for x in game['categories'] if x['name'] == "Wargame"]:
-            stars = u"*** "
+            stars = u"(WAR) "
 
         if num_players:
             six = game['players_poll'][num_players]
@@ -196,11 +203,14 @@ if __name__ == '__main__':
 
             filtered.append(game)
 
-        if not args['--group']:
-            print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
+        def print_header():
             if args['--reddit']:
                 print "BGG Rank | Best | Recommend | Weight | Length | Year | Game"
                 print "---------|------|-----------|--------|--------|------|-----"
+
+        if not args['--group']:
+            print u"Board Game Geek Top {} ({} results)".format(limit, len(filtered))
+            print_header()
             for i, game in enumerate(filtered):
                 print_filt_game(i, game, num_players, args['--reddit'])
             print ""
@@ -217,7 +227,7 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
                 print ""
 
         elif args['--group'] == 'weight':
@@ -232,7 +242,7 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
                 print ""
 
         elif args['--group'] == 'weight-individual':
@@ -247,7 +257,7 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
                 print ""
 
         elif args['--group'] == 'players':
@@ -263,7 +273,73 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
+                print ""
+
+        elif args['--group'] == 'players-weight':
+            grouped = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
+            for game in filtered:
+                for x in xrange(game['minplayers'], game['maxplayers'] + 1):
+                    rate = 'notrecommended'
+                    if x not in game['players_poll']:
+                        continue
+
+                    six = game['players_poll'][x]
+                    perc = six['best'] / float(six['total'])
+                    perc2 = six['recommended'] / float(six['total'])
+                    if perc >= 0.3:
+                        rate = 'best'
+                    elif perc2 >= 0.4:
+                        rate = 'recommended'
+
+                    grouped[x][rate][int(game['weight'])].append(game)
+
+            names = {
+                1: 'Light',
+                2: 'Medium',
+                3: 'Heavy',
+                4: 'Very Heavy',
+            }
+            print "# Board Game Geek Top {} by Suggested Player Count and Weight".format(limit)
+            print ""
+            print "- __Best__: At least 30% of players think the game is 'Best' at the given player count"
+            print "- __Recommended__: Not the Best, but at least 40% of players think the game is 'Recommended' at the given player count."
+            print "- __Light__: A game with a voted weight in the range 1 to 1.999 on Board Game Geek"
+            print "- __Medium__: A game with a voted weight in the range 2 to 2.999 on Board Game Geek"
+            print "- __Heavy__: A game with a voted weight in the range 3 to 3.999 on Board Game Geek"
+            print "- __Very Heavy__: A game with a voted weight in the range 4 to 5 on Board Game Geek"
+            print ""
+
+            for num, gs in sorted(grouped.items()):
+                if num > 9:
+                    continue
+                print "## Best with {} Players".format(num)
+                print ""
+                for weight, games in sorted(gs['best'].items()):
+                    if len(games) == 0:
+                        break
+
+                    print "#### {}\n".format(
+                        names[weight])
+                    print_header()
+                    for game in games[:25]:
+                        print_filt_game(i, game, num, args['--reddit'])
+                    print ""
+                print ""
+
+                print "## Recommended with {} Players".format(num)
+                print ""
+                for weight, games in sorted(gs['recommended'].items()):
+                    if len(games) == 0:
+                        break
+
+                    print "#### {}\n".format(
+                        names[weight])
+                    print_header()
+                    for game in games[:25]:
+                        print_filt_game(i, game, num, args['--reddit'])
+                    print ""
+
                 print ""
 
         elif args['--group'] == 'mechanism':
@@ -280,7 +356,7 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
                 print ""
 
         elif args['--group'] == 'mechanism-pair':
@@ -299,7 +375,7 @@ if __name__ == '__main__':
                         len(games)/float(len(filtered)))
                 print ""
                 for game in games:
-                    print_filt_game(i, game, num_players)
+                    print_filt_game(i, game, num_players, args['--reddit'])
                 print ""
 
         elif args['--group'] == "rating":

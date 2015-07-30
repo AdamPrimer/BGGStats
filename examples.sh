@@ -20,6 +20,8 @@
 ./bgg.py --top=500 --group=weight > examples/bgg_top_500_by_weight.md
 ./bgg.py --top=500 --group=weight-individual > examples/bgg_top_500_by_weight_individual.md
 
+./bgg.py --top=1000 --group=players-weight --reddit > examples/bgg_top_1000_player_weight.md
+
 ./recc.py --game="Suburbia" > examples/recc_suburbia_top25.md
 ./recc.py --game="Carcassonne" > examples/recc_carcassonne_top25.md
 ./recc.py --game="Stone Age" > examples/recc_stone_age_top25.md
@@ -34,3 +36,4 @@
 ./recc.py --game="Ticket to Ride" > examples/recc_ticket_to_ride_top25.md
 ./recc.py --game="Kingsburg" > examples/recc_kingsburg_top25.md
 ./recc.py --game="Five Tribes" > examples/recc_five_tribes_top25.md
+
